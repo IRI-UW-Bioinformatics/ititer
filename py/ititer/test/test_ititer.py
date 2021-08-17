@@ -1,5 +1,8 @@
 import unittest
 import pymc3 as pm
+import pandas as pd
+
+import ititer as it
 from ititer import Sigmoid
 
 
@@ -330,6 +333,65 @@ class TestSigmoidSampling(unittest.TestCase):
         self.assertNotIn("mu_d", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_d", sigmoid.posterior.varnames)
         self.assertNotIn("d", sigmoid.posterior.varnames)
+
+
+class TestTestDf(unittest.TestCase):
+    """
+    Tests for the example dataset.
+    """
+
+    def test_is_dataframe(self):
+        """
+        ititer.od should be a pandas DataFrame.
+        """
+        self.assertIsInstance(it.load_example_df(), pd.DataFrame)
+
+    def test_columns(self):
+        """
+        Test that OD, Sample and Dilution columns are present.
+        """
+        self.assertEqual(
+            {"OD", "Sample", "Dilution"}, set(it.load_example_df().columns)
+        )
+
+    def test_shape(self):
+        """
+        The DataFrame should have 85 rows and 3 columns.
+        """
+        self.assertEqual((1298, 3), it.load_example_df().shape)
+
+    def test_samples(self):
+        """
+        There should be 19 unique samples.
+        """
+        self.assertEqual(19, len(it.load_example_df()["Sample"].unique()))
+
+
+class TestLogTransformTiter(unittest.TestCase):
+    """
+    Tests for the it.log_transform_titer helper function.
+    """
+
+    def test_case_a(self):
+        """
+        If titer is the same as start, result should be 0, regardless of fold.
+        """
+        self.assertEqual(0, it.log_transform_titer(titer=40, start=40, fold=4))
+        self.assertEqual(0, it.log_transform_titer(titer=40, start=40, fold=2))
+
+    def test_negative_start_not_allowed(self):
+        """
+        Passing a negative start should raise a ValueError.
+        """
+        with self.assertRaisesRegex(ValueError, "start must be positive"):
+            it.log_transform_titer(40, -10, 4)
+
+    def test_negative_fold_not_allowed(self):
+        """
+        Passing a negative fold should raise a ValueError.
+        """
+        with self.assertRaisesRegex(ValueError, "fold must be positive"):
+            it.log_transform_titer(40, 40, -1)
 
 
 if __name__ == "__main__":
