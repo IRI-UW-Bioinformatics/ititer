@@ -1,3 +1,6 @@
 **__pycache__
 ititer.egg-info
 docs/_build
+.eggs
+build
+dist
