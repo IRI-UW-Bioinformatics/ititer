@@ -1,3 +1,0 @@
-alabaster==0.7.12
-sphinx==4.1.2
-ititer==0.1.0
