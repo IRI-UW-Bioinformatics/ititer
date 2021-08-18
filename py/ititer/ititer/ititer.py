@@ -1,20 +1,36 @@
+import math
+import operator
 from os import path
 from numbers import Real
-from typing import Union, Iterable, Hashable
-
+from typing import Union, Iterable, Hashable, Generator
 import pandas as pd
+
 import numpy as np
+import arviz as az
 import pymc3 as pm
 import matplotlib.pyplot as plt
 
+plt.style.use("seaborn-whitegrid")
 
-class ModelNotFittedWarning(Exception):
+
+class ModelNotFittedError(Exception):
     """
     Raise this warning when a user tries to access attributes only available
     after a model is fit.
     """
 
     pass
+
+
+def _batches(iterable: Iterable, n: int) -> Generator[tuple, None, None]:
+    """
+    Generate batches length n of an iterable.
+    """
+    iterable = tuple(iterable)
+    i = 0
+    while i < len(iterable):
+        yield iterable[i : i + n]
+        i += n
 
 
 def load_example_data() -> pd.DataFrame:
@@ -39,18 +55,11 @@ def inverse_logit(
     return c + d / (1 + np.exp(b * (x - a)))
 
 
-def log_transform_titer(
-    titer: Union[Iterable[Real], Real], start: Real, fold: Real
-) -> Union[Iterable[Real], Real]:
+def _check_star_fold_valid(start, fold) -> None:
     """
-    Log transform a titer.
+    Check that start and fold will make valid dilution series.
 
-    :param titer: A titer or titers to transform.
-    :param start: The starting dilution of the dilution series.
-    :param fold: The fold change in concentration at each step in the dilution
-    series.
-    :returns: numpy.ndarray if titer is iterable, otherwise the same type as
-    titer.
+    Helper function used by titer_to_index and index_to_titer.
     """
     if not isinstance(start, Real):
         raise ValueError("start should be a single number")
@@ -60,11 +69,69 @@ def log_transform_titer(
         raise ValueError("start must be positive")
     if fold < 0:
         raise ValueError("fold must be positive")
-    titer = np.array(titer) if isinstance(titer, Iterable) else titer
+
+
+def titer_to_index(
+    titer: Union[Iterable[Real], Real], start: Real, fold: Real
+) -> Union[Iterable[Real], Real]:
+    """
+    Log transform a titer / dilution to its position in a dilution series.
+
+    Titers are referred to by their reciprocal, so a titer/dilution of "1/10" is
+    referred to as simply '10'.
+
+    A starting dilution of 10 and a fold change of 2 will generate a dilution
+    series of: (10, 20, 40, 80, 160, ...). This function takes a dilution, and
+    returns its index in the dilution series.
+
+    :param titer: Titer(s) to transform.
+    :param start: Starting dilution of the series.
+    :param fold: Fold change of the series.
+    """
+    _check_star_fold_valid(start, fold)
+    titer = np.array(titer) if isinstance(titer, (list, tuple)) else titer
     return np.log(titer / start) / np.log(fold)
 
 
+def index_to_titer(
+    index: Union[Iterable[Real], Real], start: Real, fold: Real
+) -> Union[Iterable[Real], Real]:
+    """
+    Transform a position in a dilution series to a titer.
+
+    Titers are referred to by their reciprocal, so a titer/dilution of "1/10" is
+    referred to as simply '10'.
+
+    A starting dilution of 10 and a fold change of 2 will generate a dilution
+    series of: (10, 20, 40, 80, 160, ...). This function takes a position in
+    this dilution series and returns the dilution.
+
+    :param index: Indices(s) to transform.
+    :param start: Starting dilution of the series.
+    :param fold: Fold change of the series.
+    """
+    _check_star_fold_valid(start, fold)
+    index = np.array(index) if isinstance(index, (list, tuple)) else index
+    return start * np.exp(index * np.log(fold))
+
+
 class Sigmoid:
+    """
+    Sigmoid model for a dose response curve. The model fits a response,
+    :math:`y`, as a function of log dilution, :math:`x`:
+
+    :math:`y = c + d / (1 + e^{b(x - a)})`
+
+    Posterior distributions of each parameter can be inferred by either fully or
+    partially pooling inference across samples (`partial` vs `full`).
+    Parameters can also be fixed *a priori*, by providing a float.
+
+    :param a: ``'partial'``, ``'full'`` or float.
+    :param b: ``'partial'``, ``'full'`` or float.
+    :param c: ``'partial'``, ``'full'`` or float.
+    :param d: ``'partial'``, ``'full'`` or float.
+    """
+
     def __init__(
         self,
         a: Union[str, Real] = "partial",
@@ -72,14 +139,6 @@ class Sigmoid:
         c: Union[str, Real] = "full",
         d: Union[str, Real] = "full",
     ):
-        """
-        Sigmoid model for a dose response curve.
-
-        :param a:
-        :param b:
-        :param c:
-        :param d:
-        """
         self.a = a
         self.b = b
         self.c = c
@@ -114,10 +173,10 @@ class Sigmoid:
         :param response: Response values.
         :param sample_labels: Sample labels.
         :param data: An optional DataFrame. If this is supplied then
-        log_dilutions, response, and sample_labels should be columns in the
-        DataFrame.
+            log_dilutions, response, and sample_labels should be columns in the
+            DataFrame.
         :param draws: Number of samples to draw from the posterior distribution.
-        :param **kwds: Passed to pymc3.sample.
+        :param kwds: Passed to pymc3.sample.
         """
         if isinstance(data, pd.DataFrame):
             log_dilution = data[log_dilution]
@@ -205,13 +264,13 @@ class Sigmoid:
         sigmoid.mu_log_dilution = mu_log_dilution
         sigmoid.sd_log_dilution = sd_log_dilution
         sigmoid.sample_i = sample_i
-        sigmoid.samples = list(sample_i)
+        sigmoid.samples = uniq_samples
         sigmoid.data = pd.DataFrame(
             {
                 "log dilution": log_dilution,
                 "log dilution std": x,
                 "response": response,
-                "sample labels": sample_labels,
+                "sample": sample_labels,
             }
         )
 
@@ -233,17 +292,17 @@ class Sigmoid:
         :param sample: The sample to plot.
         :param points: Whether to plot the data as well.
         :param mean: Show the mean of the posterior distribution, rather than samples
-        from the posterior.
+            from the posterior.
         :param scatter_kwds: Passed to matplotlib.pyplot.scatter. Used to control the
-        appearance of the data points.
+            appearance of the data points.
         :param line_kwds: Passed to matplotlib.pyplot.plot. Used to control the
-        appearance of the lines.
+            appearance of the lines.
         :param step: Show every step'th sample from the posterior. Only has an
-        effect if mean is False.
+            effect if mean is False.
         :param match_point_color_to_line_color: Match the color of the data
-        points to the lines. This is useful when you want different samples on a
-        single plot to have distinct colors, but for the lines and points of one
-        sample to match.
+            points to the lines. This is useful when you want different samples on a
+            single plot to have distinct colors, but for the lines and points of one
+            sample to match.
         """
         def_scatter_kwds = dict(c="black", zorder=10)
         def_line_kwds = dict(
@@ -276,7 +335,7 @@ class Sigmoid:
         lines = plt.plot(xgrid, ygrid, **line_kwds)
 
         if points:
-            sub_df = self.data.set_index("sample labels").loc[sample]
+            sub_df = self.data.set_index("sample").loc[sample]
             if match_point_color_to_line_color:
                 scatter_kwds["c"] = lines[0].get_color()
             plt.scatter(
@@ -308,6 +367,175 @@ class Sigmoid:
             )
         plt.legend(title="Sample")
 
+    def plot_all_samples(
+        self,
+        samples_per_ax: int = 9,
+        n_cols: int = 4,
+        ax_width: Real = 7,
+        ax_height: Real = 4,
+    ) -> None:
+        """
+        Plot sigmoid curves for all samples using the mean posterior value of
+        each parameter.
+
+        :samples_per_ax: Number of samples to put on a single ax.
+        :n_cols: Number of columns of axes. The number of rows is computed based
+            on this and samples_per_ax.
+        :ax_width: Width of a single ax.
+        :ax_height: Height of a single ax.
+        """
+        n_rows = math.ceil(len(self.samples) / samples_per_ax / n_cols)
+
+        fig, axes = plt.subplots(
+            nrows=n_rows,
+            ncols=n_cols,
+            sharex=True,
+            sharey=True,
+            figsize=(n_cols * ax_width, n_rows * ax_height),
+        )
+
+        batches = _batches(self.samples, samples_per_ax)
+
+        for samples, ax in zip(batches, fig.axes):
+            plt.sca(ax)
+            self.plot_samples(samples)
+
+    def inflections(self, hdi_prob: float = 0.95) -> pd.DataFrame:
+        """
+        Summarise the posterior distribution of inflection points for each sample.
+
+        The returned DataFrame has the following columns:
+
+            - 'mean': Mean value.
+            - 'median': Median value.
+            - 'hdi low': Lower boundary of the highest density interval (HDI).
+            - 'hdi high': Upper boundary of the HDI.
+
+        :param hdi_prob: The width of the HDI to calculate.
+        """
+        try:
+            # Calling pm.hdi issues warnings about not being in a model context
+            # better to explicitly make an arviz inference data object
+            # az.convert_to_inference_data expects dimensions of (chains, draws,
+            # shape), hence np.newaxis
+            i_data = az.convert_to_inference_data(self.posterior["a"][np.newaxis])
+        except AttributeError:
+            raise ModelNotFittedError
+
+        hdi = pm.hdi(i_data, hdi_prob=hdi_prob).x
+
+        df = pd.DataFrame(
+            {
+                "mean": np.mean(self.posterior["a"], axis=0),
+                "median": np.median(self.posterior["a"], axis=0),
+                "hdi low": hdi[:, 0].values,
+                "hdi high": hdi[:, 1].values,
+            },
+            index=self.samples,
+        )
+
+        df.index.name = "sample"
+
+        return self.inverse_scale(df)
+
+    def endpoints(
+        self,
+        cutoff_proportion: Union[Real, None] = None,
+        cutoff_absolute: Union[Real, None] = None,
+        hdi_prob: Real = 0.95,
+    ) -> pd.DataFrame:
+        """
+        Compute endpoints for each sample, given some response. An endpoint is
+        the dilution at which a particular value of the response is obtained,
+        known as the cutoff. The cutoff is either in absolute units, or given as
+        a proportion of d.
+
+        Must supply exactly one of either cutoff_proportion or cutoff_absolute.
+
+        The returned DataFrame contains endpoints on the log-transformed scale.
+
+        :param cutoff_proportion: Proportion of d. Must be in interval (0, 1).
+        :param cutoff_absolute: Absolute value of d.
+        """
+        if not operator.xor(cutoff_absolute is None, cutoff_proportion is None):
+            raise ValueError("Must give either cutoff_absolute or cutoff_proportion")
+
+        if cutoff_proportion is not None:
+            if not isinstance(cutoff_proportion, Real):
+                raise ValueError("cutoff_proportion must be a number")
+            if not (0 < cutoff_proportion < 1):
+                raise ValueError("cutoff_proportion must be in interval (0, 1)")
+            elif self.d == "partial":
+                # When d has per-sample estimates, y also gets per-sample values
+                y = self.posterior["d"].mean(axis=0) * cutoff_proportion
+            elif self.d == "full":
+                y = self.posterior["d"].mean() * cutoff_proportion
+            else:
+                y = self.d * cutoff_proportion
+
+        else:
+            if not isinstance(cutoff_absolute, Real):
+                raise ValueError("cutoff_absolute must be a number")
+            else:
+                y = cutoff_absolute
+
+        # Get posterior distributions of parameter values in correct shape
+        params = {}
+        for param in "abcd":
+            value = getattr(self, param)
+            if value == "full":
+                params[param] = self.posterior[param][:, np.newaxis]
+            elif value == "partial":
+                params[param] = self.posterior[param]
+            else:
+                params[param] = value
+
+        def f(y, a, b, c, d):
+            return a + (np.log((d / (y - c)) - 1) / b)
+
+        posterior_endpoints = f(y, **params)
+
+        # Calling pm.hdi issues warnings about not being in a model context
+        # better to explicitly make an arviz inference data object
+        # az.convert_to_inference_data expects dimensions of (chains, draws,
+        # shape), hence np.newaxis
+        i_data = az.convert_to_inference_data(posterior_endpoints[np.newaxis])
+
+        hdi = pm.hdi(i_data, hdi_prob=hdi_prob).x
+
+        df = pd.DataFrame(
+            {
+                "mean": np.mean(posterior_endpoints, axis=0),
+                "median": np.median(posterior_endpoints, axis=0),
+                "hdi low": hdi[:, 0].values,
+                "hdi high": hdi[:, 1].values,
+            },
+            index=self.samples,
+        )
+
+        df.index.name = "sample"
+
+        return self.inverse_scale(df)
+
+    def scale(self, x: Union[Real, np.ndarray]) -> Union[Real, np.ndarray]:
+        """
+        Log dilutions are scaled to have mean of 0 and standard deviation of 1
+        for efficient inference. Apply the same scaling to x, i.e. from the log
+        dilution scale to the standardised log dilution scale.
+
+        :param x: Value(s) to scale.
+        """
+        return (x - self.mu_log_dilution) / self.sd_log_dilution
+
+    def inverse_scale(self, x: Union[Real, np.ndarray]) -> Union[Real, np.ndarray]:
+        """
+        Log dilutions are scaled to have mean of 0 and standard deviation of 1
+        for efficient inference. Apply the inverse scaling to x, i.e. from the standardised log dilution scale back to the log dilution scale.
+
+        :param x: Value(s) to scale.
+        """
+        return (x * self.sd_log_dilution) + self.mu_log_dilution
+
     @property
     def log_dilutions(self) -> np.array:
         """
@@ -316,7 +544,7 @@ class Sigmoid:
         try:
             return np.sort(self.data["log dilution"].unique())
         except AttributeError:
-            raise ModelNotFittedWarning(
+            raise ModelNotFittedError(
                 "An unfitted Sigmoid has no log dilutions. Call Sigmoid.fit first."
             )
 
@@ -326,8 +554,8 @@ class Sigmoid:
         A sorted array of unique standardised log dilutions in the data.
         """
         try:
-            return (self.log_dilutions - self.mu_log_dilution) / self.sd_log_dilution
-        except ModelNotFittedWarning:
-            raise ModelNotFittedWarning(
+            return self.scale(self.log_dilutions)
+        except ModelNotFittedError:
+            raise ModelNotFittedError(
                 "An unfitted Sigmoid has no standardised log dilutions. Call Sigmoid.fit first."
             )

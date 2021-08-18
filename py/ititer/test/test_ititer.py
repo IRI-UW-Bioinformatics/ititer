@@ -6,6 +6,90 @@ import ititer as it
 from ititer import Sigmoid
 
 
+class TestFittedSigmoid(unittest.TestCase):
+    """
+    Tests for ititer.Sigmoid after a model has been fit.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Fit some data once.
+        """
+        sigmoid = Sigmoid()
+        df = it.load_example_data().head(50)
+        df["Log Dilution"] = it.titer_to_index(df["Dilution"], start=40, fold=4)
+        cls.sigmoid = sigmoid.fit(
+            draws=10,  # Just for testing
+            log_dilution=df["Log Dilution"],
+            response=df["OD"],
+            sample_labels=df["Sample"],
+        )
+
+    def test_inflections_dataframe_columns(self):
+        """
+        Check the inflections DataFrame has the expected columns.
+        """
+        df_inflections = self.sigmoid.inflections(hdi_prob=0.95)
+        self.assertEqual(
+            {"mean", "median", "hdi low", "hdi high"}, set(df_inflections.columns)
+        )
+
+    def test_inflections_dataframe_shape(self):
+        """
+        Check the inflections DataFrame has the expected shape.
+        """
+        df_inflections = self.sigmoid.inflections(hdi_prob=0.95)
+        n_samples = len(self.sigmoid.data["sample"].unique())
+        self.assertEqual((n_samples, 4), df_inflections.shape)
+
+    def test_must_provide_one_response_to_endpoints(self):
+        """
+        Must provide exactly one of cutoff_absolute and cutoff_proportion to
+        Sigmoid.endpoints.
+        """
+        msg = "Must give either cutoff_absolute or cutoff_proportion"
+
+        with self.assertRaisesRegex(ValueError, msg):
+            self.sigmoid.endpoints()
+
+        with self.assertRaisesRegex(ValueError, msg):
+            self.sigmoid.endpoints(cutoff_absolute=0.5, cutoff_proportion=0.5)
+
+    def test_cutoff_proportion_negative(self):
+        """
+        Providing a negative cutoff_proportion should raise a ValueError.
+        """
+        msg = "cutoff_proportion must be in interval \(0, 1\)"
+        with self.assertRaisesRegex(ValueError, msg):
+            self.sigmoid.endpoints(cutoff_proportion=-0.5)
+
+    def test_cutoff_proportion_gt_1(self):
+        """
+        Providing cutoff_proportion greater than 1 should raise a ValueError.
+        """
+        msg = "cutoff_proportion must be in interval \(0, 1\)"
+        with self.assertRaisesRegex(ValueError, msg):
+            self.sigmoid.endpoints(cutoff_proportion=1.5)
+
+    def test_endpoints_dataframe_columns(self):
+        """
+        Check the endpoints DataFrame has the expected columns.
+        """
+        df_endpoints = self.sigmoid.endpoints(cutoff_absolute=0.5, hdi_prob=0.95)
+        self.assertEqual(
+            {"mean", "median", "hdi low", "hdi high"}, set(df_endpoints.columns)
+        )
+
+    def test_endpoints_dataframe_shape(self):
+        """
+        Check the endpoints DataFrame has the expected shape.
+        """
+        df_endpoints = self.sigmoid.endpoints(cutoff_absolute=0.5, hdi_prob=0.95)
+        n_samples = len(self.sigmoid.data["sample"].unique())
+        self.assertEqual((n_samples, 4), df_endpoints.shape)
+
+
 class TestSigmoid(unittest.TestCase):
     """
     Tests for ititer.Sigmoid
@@ -344,54 +428,124 @@ class TestTestDf(unittest.TestCase):
         """
         ititer.od should be a pandas DataFrame.
         """
-        self.assertIsInstance(it.load_example_df(), pd.DataFrame)
+        self.assertIsInstance(it.load_example_data(), pd.DataFrame)
 
     def test_columns(self):
         """
         Test that OD, Sample and Dilution columns are present.
         """
         self.assertEqual(
-            {"OD", "Sample", "Dilution"}, set(it.load_example_df().columns)
+            {"OD", "Sample", "Dilution"}, set(it.load_example_data().columns)
         )
 
     def test_shape(self):
         """
         The DataFrame should have 85 rows and 3 columns.
         """
-        self.assertEqual((1298, 3), it.load_example_df().shape)
+        self.assertEqual((1296, 3), it.load_example_data().shape)
 
     def test_samples(self):
         """
-        There should be 19 unique samples.
+        There should be 162 unique samples.
         """
-        self.assertEqual(19, len(it.load_example_df()["Sample"].unique()))
+        self.assertEqual(162, len(it.load_example_data()["Sample"].unique()))
 
 
-class TestLogTransformTiter(unittest.TestCase):
+class TestTiterToIndex(unittest.TestCase):
     """
-    Tests for the it.log_transform_titer helper function.
+    Tests for the it.titer_to_index helper function.
     """
 
-    def test_case_a(self):
+    def test_start_eq_titer(self):
         """
         If titer is the same as start, result should be 0, regardless of fold.
         """
-        self.assertEqual(0, it.log_transform_titer(titer=40, start=40, fold=4))
-        self.assertEqual(0, it.log_transform_titer(titer=40, start=40, fold=2))
+        self.assertEqual(0, it.titer_to_index(titer=40, start=40, fold=4))
+        self.assertEqual(0, it.titer_to_index(titer=40, start=40, fold=2))
+
+    def test_case_a(self):
+        """
+        Start = 10, titer = 40, fold = 2 should give index of 2.
+        """
+        self.assertEqual(2, it.titer_to_index(titer=40, start=10, fold=2))
 
     def test_negative_start_not_allowed(self):
         """
         Passing a negative start should raise a ValueError.
         """
         with self.assertRaisesRegex(ValueError, "start must be positive"):
-            it.log_transform_titer(40, -10, 4)
+            it.titer_to_index(40, -10, 4)
 
     def test_negative_fold_not_allowed(self):
         """
         Passing a negative fold should raise a ValueError.
         """
         with self.assertRaisesRegex(ValueError, "fold must be positive"):
-            it.log_transform_titer(40, 40, -1)
+            it.titer_to_index(40, 40, -1)
+
+
+class TestIndexToTiter(unittest.TestCase):
+    """
+    Tests for it.index_to_titer.
+    """
+
+    def test_case_a(self):
+        """
+        Start = 10, index = 2, fold = 2 should give titer of 40.
+        """
+        self.assertEqual(40, it.index_to_titer(index=2, start=10, fold=2))
+
+    def test_index_to_titer_inverse_of_titer_to_index(self):
+        """
+        index_to_titer should be the inverse function of titer_to_index.
+        """
+        start = 3.2
+        fold = 5.5
+        index = 5
+        titer = it.index_to_titer(index=index, start=start, fold=fold)
+        self.assertEqual(index, it.titer_to_index(titer=titer, start=start, fold=fold))
+
+
+class TestBatches(unittest.TestCase):
+    """
+    Tests for ititer._batches
+    """
+
+    def test_yields_tuples(self):
+        """
+        It should yield tuples.
+        """
+        batch = next(it._batches("ABCDE", 5))
+        self.assertIsInstance(batch, tuple)
+
+    def test_n_matches_length(self):
+        """
+        If n is the same length as the iterable.
+        """
+        batches = it._batches("ABCDE", 5)
+        self.assertEqual(5, len(next(batches)))
+
+    def test_iterable_multiple_of_n(self):
+        """
+        Test when the length of the iterator is a multiple of n.
+        """
+        batches = it._batches("ABCD", 2)
+        batch1 = next(batches)
+        self.assertEqual(("A", "B"), batch1)
+        batch2 = next(batches)
+        self.assertEqual(("C", "D"), batch2)
+        with self.assertRaises(StopIteration):
+            next(batches)
+
+    def test_iterable_not_multiple_of_n(self):
+        """
+        Test when the length of the iterator is not a multiple of n.
+        """
+        batches = it._batches("ABC", 2)
+        batch1 = next(batches)
+        self.assertEqual(("A", "B"), batch1)
+        batch2 = next(batches)
+        self.assertEqual(("C",), batch2)
 
 
 if __name__ == "__main__":
