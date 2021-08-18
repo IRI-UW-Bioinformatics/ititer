@@ -33,6 +33,13 @@ release = "0.1.0"
 extensions = ["sphinx.ext.autodoc"]
 autodoc_typehints = "description"
 autodoc_member_order = "bysource"
+pygments_style = "sphinx"
+
+html_theme_options = {
+    "github_user": "IRI-UW-Bioinformatics",
+    "github_repo": "ititer",
+    "github_button": True,
+}
 
 
 # Add any paths that contain templates here, relative to this directory.
