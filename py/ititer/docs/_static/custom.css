@@ -1,0 +1,7 @@
+div.body {
+    max-width: 850px;
+}
+
+.method, .property, .function, .class {
+    margin-top: 25px;
+}
