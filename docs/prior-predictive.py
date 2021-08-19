@@ -23,8 +23,9 @@ y = it.inverse_logit(
     d=sigmoid.prior_predictive["d"],
 )
 
-plt.plot(x, y, c="grey", alpha=0.25, lw=0.5)
+plt.plot(x, y, c="grey", alpha=0.5, lw=0.5)
 plt.xlabel("Log dilution Z-scores")
 plt.ylabel("Response")
-
+plt.ylim(0, 3)
+plt.xlim(-2.5, 2.5)
 plt.savefig("prior-predictive.png", bbox_inches="tight", dpi=300)
