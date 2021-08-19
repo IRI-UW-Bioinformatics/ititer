@@ -33,13 +33,6 @@ release = "0.1.0"
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx"]
 autodoc_typehints = "description"
 autodoc_member_order = "bysource"
-pygments_style = "sphinx"
-
-html_theme_options = {
-    "repository_url": "https://github.com/IRI-UW-Bioinformatics/ititer/",
-    "use_repository_button": True,
-    "extra_navbar": "<p>A python module for analyzing serial dilution assay data.</p>",
-}
 
 intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/docs/", None),
@@ -71,3 +64,13 @@ html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 
 html_logo = "logo.png"
+
+pygments_style = "sphinx"
+
+html_theme_options = {
+    "repository_url": "https://github.com/IRI-UW-Bioinformatics/ititer/",
+    "use_repository_button": True,
+    "use_edit_page_button": True,
+    "use_issues_button": True,
+    "extra_navbar": "<p>A python module for analyzing serial dilution assay data.</p>",
+}
