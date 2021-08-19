@@ -197,6 +197,26 @@ class TestSigmoid(unittest.TestCase):
                 sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
             )
 
+    def test_passing_column_names(self):
+        """
+        Should be able to pass a data keyword argument and names of columns in a
+        DataFrame.
+        """
+        df = pd.DataFrame(
+            dict(
+                log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
+                response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
+                sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
+            )
+        )
+        Sigmoid().fit(
+            data=df,
+            response="response",
+            sample_labels="sample_labels",
+            log_dilution="log_dilution",
+            draws=10,
+        )
+
 
 class TestSigmoidSampling(unittest.TestCase):
     """

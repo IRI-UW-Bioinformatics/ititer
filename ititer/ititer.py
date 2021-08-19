@@ -160,8 +160,9 @@ class Sigmoid:
         log_dilution: Union[Iterable[Real], Hashable],
         response: Union[Iterable[Real], Hashable],
         sample_labels: Union[Iterable[Hashable], Hashable],
-        data: pd.DataFrame = None,
+        data: Union[pd.DataFrame, None] = None,
         draws: int = 10_000,
+        prior_predictive: bool = False,
         **kwds,
     ):
         """
@@ -170,17 +171,18 @@ class Sigmoid:
         :param log_diluton: Log diluton values.
         :param response: Response values.
         :param sample_labels: Sample labels.
-        :param data: An optional DataFrame. If this is supplied then
-            `log_dilutions`, `response`, and `sample_labels` should be columns in
-            the DataFrame.
+        :param data: Optional DataFrame. If supplied then `log_dilutions`,
+            `response`, and `sample_labels` should be columns in the DataFrame.
         :param draws: Number of samples to draw from the posterior distribution.
         :param kwds: Passed to :py:func:`pymc3.sample`.
+        :param prior_predictive: Sample from the prior predicitve distribution.
+            The returned Sigmoid object has a `prior_predictive` attribute.
         :returns: Sigmoid object with `posterior` attribute.
         """
         if isinstance(data, pd.DataFrame):
-            log_dilution = data[log_dilution]
-            response = data[response]
-            sample_labels = data[sample_labels]
+            log_dilution = data[log_dilution].values
+            response = data[response].values
+            sample_labels = data[sample_labels].values
         elif data is not None:
             raise ValueError("data should be a pandas DataFrame or None")
         else:
@@ -256,6 +258,8 @@ class Sigmoid:
             sigma = pm.Exponential("sigma", 1)
             mu = c + d * pm.math.invlogit(-b * (x - a))
             pm.Normal("lik", mu, sigma, observed=response)
+            if prior_predictive:
+                sigmoid.prior_predictive = pm.sample_prior_predictive()
             sigmoid.posterior = pm.sample(
                 draws=draws, return_inferencedata=False, **kwds
             )
