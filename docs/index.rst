@@ -32,6 +32,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   quick
    tutorial
    advanced
    commands
