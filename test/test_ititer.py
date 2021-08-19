@@ -172,7 +172,7 @@ class TestSigmoid(unittest.TestCase):
 
     def test_passing_multidimensional_sample_labels(self):
         """
-        Passing multidimensional arrays to Sigmoid.fit for sample_lables should
+        Passing multidimensional arrays to Sigmoid.fit for sample_labels should
         raise a ValueError.
         """
         with self.assertRaisesRegex(ValueError, "sample_labels not 1 dimensional"):
@@ -506,7 +506,7 @@ class TestTestDf(unittest.TestCase):
 
     def test_is_dataframe(self):
         """
-        ititer.od should be a pandas DataFrame.
+        ititer.load_example_data() should return a pandas DataFrame.
         """
         self.assertIsInstance(it.load_example_data(), pd.DataFrame)
 

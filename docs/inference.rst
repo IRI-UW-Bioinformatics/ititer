@@ -1,9 +1,9 @@
-Baysian Inference
-=================
+Bayesian Inference
+==================
 
 :py:mod:`ititer` uses Bayesian inference to infer posterior distributions of sigmoid curve parameters.
 
-Formally, the response of sample `i`, :math:`y_i`, is modelled as a function of log dilution using a four paramter logistic curve, :math:`x_i`:
+Formally, the response of sample `i`, :math:`y_i`, is modelled as a function of log dilution using a four parameter logistic curve, :math:`x_i`:
 
 .. math::
 
@@ -28,7 +28,7 @@ Standardizing
 Log dilution is standardized to have mean of zero and standard deviation of one for inference.
 
 Response is left unstandardized to help set priors for `c` and `d`.
-For instance, it is often known *a priori* that at theoretical minimum or maximul concentrations the response will have some known value.
+For instance, it is often known *a priori* that at theoretical minimum or maximum concentrations the response will have some known value.
 
 Priors
 ------

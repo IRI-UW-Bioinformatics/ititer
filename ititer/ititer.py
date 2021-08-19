@@ -51,7 +51,7 @@ def inverse_logit(
     x: Union[Iterable[Real], Real], a: Real, b: Real, c: Real, d: Real
 ) -> Union[Iterable, Real]:
     """
-    Inverse logit function at point x.
+    Inverse logit function.
 
     :param x: x.
     :param a: Location of inflection point on x-axis.
@@ -175,14 +175,14 @@ class Sigmoid:
         """
         Fit parameters of the sigmoid curve to data.
 
-        :param log_diluton: Log diluton values.
+        :param log_dilution: Log dilution values.
         :param response: Response values.
         :param sample_labels: Sample labels.
         :param data: Optional DataFrame. If supplied then `log_dilutions`,
             `response`, and `sample_labels` should be columns in the DataFrame.
         :param draws: Number of samples to draw from the posterior distribution.
         :param kwds: Passed to :py:func:`pymc3.sample`.
-        :param prior_predictive: Sample from the prior predicitve distribution.
+        :param prior_predictive: Sample from the prior predictive distribution.
             The returned Sigmoid object has a `prior_predictive` attribute.
         :returns: Sigmoid object with `posterior` attribute.
         """
@@ -316,8 +316,8 @@ class Sigmoid:
         :param points: Whether to plot the data as well.
         :param mean: Show the mean of the posterior distribution, rather than samples
             from the posterior.
-        :param scatter_kwds: Passed to :py:func:`matplotlib.pyplot.scatter`. Used to control the
-            appearance of the data points.
+        :param scatter_kwds: Passed to :py:func:`matplotlib.pyplot.scatter`.
+            Used to control the appearance of the data points.
         :param line_kwds: Passed to :py:func:`matplotlib.pyplot.plot`. Used to control the
             appearance of the lines.
         :param step: Show every step'th sample from the posterior. Only has an
@@ -474,8 +474,8 @@ class Sigmoid:
         """
         Compute endpoints for each sample, given some response. An endpoint is
         the dilution at which a particular value of the response is obtained,
-        known as the cutoff. The cutoff is either in absolute units, or given as
-        a proportion of `d`.
+        known as the cut-off. The cut-off is either in absolute units, or given
+        as a proportion of `d`.
 
         Must supply exactly one of either `cutoff_proportion` or `cutoff_absolute`.
 

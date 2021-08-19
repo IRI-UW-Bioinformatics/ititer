@@ -1,5 +1,5 @@
-Quickstart guide
-================
+Quick start guide
+=================
 
 Installation
 ------------

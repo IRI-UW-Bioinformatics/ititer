@@ -9,7 +9,7 @@ The position of the sigmoid curve is captured by its inflection point, or **infl
     :align: center
     :width: 60 %
 
-Alternatively, the dilution at which the measurement drops below a cutoff value can be measured.
+Alternatively, the dilution at which the measurement drops below a cut-off value can be measured.
 This is known as an **endpoint titer**.
 
 Investigators often measure all samples at many dilutions (typically 8-12).
@@ -22,9 +22,9 @@ Applied to a SARS-CoV-2 and human seasonal coronavirus ELISA dataset, just 3 dil
 Highlights
 ----------
 
-* Simple interface aimed at enabling investiagtors with basic knowledge of python to conduct analyses.
+* Simple interface aimed at enabling investigators with basic knowledge of python to conduct analyses.
 * Substantially decrease workload associated with serial dilution assays.
-* Flexibly incorporate different prior knowledge about experimental systems to faciliate inference.
+* Flexibly incorporate different prior knowledge about experimental systems to facilitate inference.
 
 Contents
 --------

@@ -150,7 +150,7 @@ Inflection titers
 -----------------
 
 The degree to which a sigmoid curve is shifted left or right on the x-axis is often the point of interest to compare between samples.
-This is described by the inflection point of the curve, caculated by :py:meth:`~.ititer.Sigmoid.inflections`:
+This is described by the inflection point of the curve, calculated by :py:meth:`~.ititer.Sigmoid.inflections`:
 
 .. code-block:: python
 
@@ -194,8 +194,8 @@ Endpoint titers
 ---------------
 
 Endpoint titers can also be computed.
-An endpoint titer is the dilution at which the response drops below a certain value, known as the cutoff.
-Choice of cutoff is somewhat arbitrary, but is usually some low absolute value, or a low proportion of the maximal response.
+An endpoint titer is the dilution at which the response drops below a certain value, known as the cut-off.
+Choice of cut-off is somewhat arbitrary, but is usually some low absolute value, or a low proportion of the maximal response.
 Use :py:meth:`~.ititer.Sigmoid.endpoints` to compute endpoints:
 
 .. code-block:: python
