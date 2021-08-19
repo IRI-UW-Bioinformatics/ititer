@@ -1,6 +1,18 @@
 Quickstart guide
 ================
 
+Installation
+------------
+
+Open a command line and type:
+
+.. code-block:: bash
+
+    $ pip install ititer
+
+Usage
+-----
+
 Load data, and (if necessary) compute log dilutions:
 
 .. code-block:: python

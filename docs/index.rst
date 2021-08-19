@@ -34,7 +34,7 @@ Contents
 
    quick
    tutorial
-   advanced
+   inference
    commands
 
 * :ref:`genindex`

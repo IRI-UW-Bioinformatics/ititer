@@ -261,7 +261,7 @@ class Sigmoid:
                 sigma_c = pm.Exponential("sigma_c", 1)
                 c = pm.Normal("c", mu_c, sigma_c, shape=n_samples)[sample_idx]
             elif self.c == "full":
-                c = pm.Normal("c", 0, 0.05)
+                c = pm.Normal("c", 0, 1)
             else:
                 c = self.c
 

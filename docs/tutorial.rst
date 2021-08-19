@@ -1,8 +1,6 @@
 Tutorial
 ========
 
-This tutorial covers some basic usage.
-
 Load some example data using :py:mod:`ititer` and look at the first 10 rows:
 
 .. code-block:: python
