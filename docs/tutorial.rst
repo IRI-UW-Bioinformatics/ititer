@@ -1,6 +1,8 @@
 Tutorial
 ========
 
+This tutorial covers some basic usage.
+
 Load some example data using :py:mod:`ititer` and look at the first 10 rows:
 
 .. code-block:: python
@@ -34,8 +36,8 @@ Wide format data
 ----------------
 
 If your data is in *wide format*,
-for instance perhaps each row contains mulitple OD values at different dilutions for a single sample (see below),
-then use `pandas.DataFrame.melt() <https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.melt.html>`_ to generate a long format DataFrame.
+for instance perhaps each row contains OD values at different dilutions for a single sample ,
+then use :py:meth:`pandas.DataFrame.melt` to generate a long format DataFrame.
 
 Example wide format data:
 
@@ -47,7 +49,7 @@ Example wide format data:
    21-P0034-v001sr01,0.948,0.452,0.185,0.043,0.016,0.004,0.002,-0.001
    21-P0050-v001sr01,1.418,1.253,0.972,0.393,0.152,0.049,0.018,0.011
 
-For a DataFrame like this the ``melt`` call would be:
+For a DataFrame exactly like this the  call to ``melt`` would be:
 
 .. code-block:: python
 
@@ -88,7 +90,7 @@ Now we call the :py:meth:`~.ititer.Sigmoid.fit` method to infer the posterior di
 
 .. code-block:: python
 
-    posterior = sigmoid.fit(
+    sigmoid = sigmoid.fit(
         log_dilution=df["Log Dilution"], response=df["OD"], sample_labels=df["Sample"]
     )
 
@@ -113,7 +115,7 @@ Here, ``step=1000`` means that every 1,000\ :sup:`th` sample will be shown, resu
 
 .. code-block:: python
 
-    posterior.plot_sample("21-P0004-v001sr01", step=1000)
+    sigmoid.plot_sample("21-P0004-v001sr01", step=1000)
 
 .. image:: 1-sample.png
 
@@ -124,7 +126,7 @@ You can take the mean value of each parameter from the posterior distribution an
 
 .. code-block:: python
 
-    posterior.plot_sample("21-P0004-v001sr01", step=1000, mean=True)
+    sigmoid.plot_sample("21-P0004-v001sr01", step=1000, mean=True)
 
 .. image:: 1-sample-mean.png
 
@@ -132,7 +134,7 @@ To visualize multiple samples at once, pass a list of sample names to :py:meth:`
 
 .. code-block:: python
 
-    posterior.plot_samples(["21-P0833-v001sr01", "21-P0834-v001sr01"])
+    sigmoid.plot_samples(["21-P0833-v001sr01", "21-P0834-v001sr01"])
 
 .. image:: 2-samples.png
 
@@ -140,13 +142,11 @@ Or, to show all samples use :py:meth:`~.ititer.Sigmoid.plot_all_samples`:
 
 .. code-block:: python
 
-    posterior.plot_all_samples()
+    sigmoid.plot_all_samples()
 
 .. image:: all-samples.png
 
-
-Matplotlib is used for all plotting.
-See the `matplotlib documentation <https://matplotlib.org/>`_ for help on customizing and saving figures.
+See the :py:mod:`matplotlib` documentation for help on customizing and saving figures.
 
 Inflection titers
 -----------------
@@ -156,7 +156,7 @@ This is described by the inflection point of the curve, caculated by :py:meth:`~
 
 .. code-block:: python
 
-    df_inflections = posterior.inflections(hdi_prob=0.95)
+    df_inflections = sigmoid.inflections(hdi_prob=0.95)
     df_inflections.head().round(2)
 
 .. csv-table::
@@ -171,7 +171,7 @@ This is described by the inflection point of the curve, caculated by :py:meth:`~
 
 ``hdi low`` and ``hdi high`` refer to the low and high boundary of the Highest Density Interval (HDI).
 An HDI is the narrowest set of parameter values that contain a certain mass of the posterior probability density - it is a type of confidence interval for a parameter.
-Here, we specified an HDI probability of 0.95 (which is also the default value for the :py:meth:`~.ititer.Sigmoid.inflections`: method).
+Here, we specified an HDI probability of 0.95 (which is also the default value for the :py:meth:`~.ititer.Sigmoid.inflections` method).
 Note, there is nothing particularly special about a value of 0.95
 
 Values in this DataFrame are on the log dilution scale; i.e. they tell you the position in the dilution series of the inflection point.
@@ -202,7 +202,7 @@ Use :py:meth:`~.ititer.Sigmoid.endpoints` to compute endpoints:
 
 .. code-block:: python
 
-    df_endpoints = posterior.endpoints(cutoff_proportion=0.1, hdi_prob=0.95)
+    df_endpoints = sigmoid.endpoints(cutoff_proportion=0.1, hdi_prob=0.95)
     df_endpoints.head().round(2)
 
 .. csv-table::

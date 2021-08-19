@@ -55,7 +55,7 @@ def inverse_logit(
     return c + d / (1 + np.exp(b * (x - a)))
 
 
-def _check_star_fold_valid(start, fold) -> None:
+def _check_start_fold_valid(start: Real, fold: Real) -> None:
     """
     Check that start and fold will make valid dilution series.
 
@@ -77,7 +77,7 @@ def titer_to_index(
     """
     Log transform a titer / dilution to its position in a dilution series.
 
-    Titers are referred to by their reciprocal, so a titer/dilution of "1/10" is
+    Titers are referred to by their reciprocal, so a titer/dilution of '1/10' is
     referred to as simply '10'.
 
     A starting dilution of 10 and a fold change of 2 will generate a dilution
@@ -88,7 +88,7 @@ def titer_to_index(
     :param start: Starting dilution of the series.
     :param fold: Fold change of the series.
     """
-    _check_star_fold_valid(start, fold)
+    _check_start_fold_valid(start, fold)
     titer = np.array(titer) if isinstance(titer, (list, tuple)) else titer
     return np.log(titer / start) / np.log(fold)
 
@@ -99,7 +99,7 @@ def index_to_titer(
     """
     Transform a position in a dilution series to a titer.
 
-    Titers are referred to by their reciprocal, so a titer/dilution of "1/10" is
+    Titers are referred to by their reciprocal, so a titer/dilution of '1/10' is
     referred to as simply '10'.
 
     A starting dilution of 10 and a fold change of 2 will generate a dilution
@@ -110,9 +110,9 @@ def index_to_titer(
     :param start: Starting dilution of the series.
     :param fold: Fold change of the series.
     """
-    _check_star_fold_valid(start, fold)
+    _check_start_fold_valid(start, fold)
     index = np.array(index) if isinstance(index, (list, tuple)) else index
-    return start * np.exp(index * np.log(fold))
+    return start * fold ** index
 
 
 class Sigmoid:
@@ -167,16 +167,15 @@ class Sigmoid:
         """
         Fit parameters of the sigmoid curve to data.
 
-        After this method is run the Sigmoid object has a posterior attribute.
-
         :param log_diluton: Log diluton values.
         :param response: Response values.
         :param sample_labels: Sample labels.
         :param data: An optional DataFrame. If this is supplied then
-            log_dilutions, response, and sample_labels should be columns in the
-            DataFrame.
+            `log_dilutions`, `response`, and `sample_labels` should be columns in
+            the DataFrame.
         :param draws: Number of samples to draw from the posterior distribution.
-        :param kwds: Passed to pymc3.sample.
+        :param kwds: Passed to :py:func:`pymc3.sample`.
+        :returns: Sigmoid object with `posterior` attribute.
         """
         if isinstance(data, pd.DataFrame):
             log_dilution = data[log_dilution]
@@ -285,6 +284,8 @@ class Sigmoid:
         line_kwds=None,
         step: int = 1000,
         match_point_color_to_line_color: bool = False,
+        xmin: Real = None,
+        xmax: Real = None,
     ) -> None:
         """
         Plot sigmoid curves from the posterior distribution of a sample.
@@ -293,16 +294,20 @@ class Sigmoid:
         :param points: Whether to plot the data as well.
         :param mean: Show the mean of the posterior distribution, rather than samples
             from the posterior.
-        :param scatter_kwds: Passed to matplotlib.pyplot.scatter. Used to control the
+        :param scatter_kwds: Passed to :py:func:`matplotlib.pyplot.scatter`. Used to control the
             appearance of the data points.
-        :param line_kwds: Passed to matplotlib.pyplot.plot. Used to control the
+        :param line_kwds: Passed to :py:func:`matplotlib.pyplot.plot`. Used to control the
             appearance of the lines.
         :param step: Show every step'th sample from the posterior. Only has an
-            effect if mean is False.
+            effect if mean is `False`.
         :param match_point_color_to_line_color: Match the color of the data
             points to the lines. This is useful when you want different samples on a
             single plot to have distinct colors, but for the lines and points of one
             sample to match.
+        :param xmin: Lowest value on the x-axis to plot. Log dilution units. If
+            None, the lowest log dilution in the data is used.
+        :param xmax: Highest value on the x-axis to plot. Log dilution units. If
+            None, the highest log dilution in the data is used.
         """
         def_scatter_kwds = dict(c="black", zorder=10)
         def_line_kwds = dict(
@@ -317,8 +322,8 @@ class Sigmoid:
             def_line_kwds if line_kwds is None else {**def_line_kwds, **line_kwds}
         )
         i = self.sample_i[sample]
-        xmin = self.data["log dilution std"].min()
-        xmax = self.data["log dilution std"].max()
+        xmin = self.data["log dilution std"].min() if xmin is None else self.scale(xmin)
+        xmax = self.data["log dilution std"].max() if xmax is None else self.scale(xmax)
         xgrid = np.linspace(xmin, xmax).reshape(-1, 1)
         params = {}
         step = 1 if mean else step
@@ -332,19 +337,19 @@ class Sigmoid:
                 params[param] = value
         ygrid = inverse_logit(xgrid, **params)
         ygrid = ygrid.mean(axis=1) if mean else ygrid
-        lines = plt.plot(xgrid, ygrid, **line_kwds)
+        lines = plt.plot(self.inverse_scale(xgrid), ygrid, **line_kwds)
 
         if points:
             sub_df = self.data.set_index("sample").loc[sample]
             if match_point_color_to_line_color:
                 scatter_kwds["c"] = lines[0].get_color()
             plt.scatter(
-                sub_df["log dilution std"],
+                sub_df["log dilution"],
                 sub_df["response"],
                 **scatter_kwds,
             )
 
-        plt.xticks(ticks=self.log_dilutions_std, labels=self.log_dilutions)
+        plt.xticks(self.log_dilutions)
         plt.xlabel("Log dilution")
         plt.ylabel("Response")
 
@@ -352,8 +357,8 @@ class Sigmoid:
         """
         Plot sigmoid curves of samples using the mean value of the posterior distribution.
 
-        :param samples: The samples to plot.
-        :param kwds: Passed to Sigmoid.plot_sample.
+        :param samples: List of samples to plot.
+        :param kwds: Passed to :py:meth:`Sigmoid.plot_sample`.
         """
         line_kwds = kwds.pop("line_kwds", {})
 
@@ -378,11 +383,11 @@ class Sigmoid:
         Plot sigmoid curves for all samples using the mean posterior value of
         each parameter.
 
-        :samples_per_ax: Number of samples to put on a single ax.
-        :n_cols: Number of columns of axes. The number of rows is computed based
+        :param samples_per_ax: Number of samples to put on a single ax.
+        :param n_cols: Number of columns of axes. The number of rows is computed based
             on this and samples_per_ax.
-        :ax_width: Width of a single ax.
-        :ax_height: Height of a single ax.
+        :param ax_width: Width of a single ax.
+        :param ax_height: Height of a single ax.
         """
         n_rows = math.ceil(len(self.samples) / samples_per_ax / n_cols)
 
@@ -404,12 +409,12 @@ class Sigmoid:
         """
         Summarise the posterior distribution of inflection points for each sample.
 
-        The returned DataFrame has the following columns:
+        The returned DataFrame has these columns:
 
-            - 'mean': Mean value.
-            - 'median': Median value.
-            - 'hdi low': Lower boundary of the highest density interval (HDI).
-            - 'hdi high': Upper boundary of the HDI.
+            - `mean`: Mean value.
+            - `median`: Median value.
+            - `hdi low`: Lower boundary of the highest density interval (HDI).
+            - `hdi high`: Upper boundary of the HDI.
 
         :param hdi_prob: The width of the HDI to calculate.
         """
@@ -448,14 +453,14 @@ class Sigmoid:
         Compute endpoints for each sample, given some response. An endpoint is
         the dilution at which a particular value of the response is obtained,
         known as the cutoff. The cutoff is either in absolute units, or given as
-        a proportion of d.
+        a proportion of `d`.
 
-        Must supply exactly one of either cutoff_proportion or cutoff_absolute.
+        Must supply exactly one of either `cutoff_proportion` or `cutoff_absolute`.
 
         The returned DataFrame contains endpoints on the log-transformed scale.
 
-        :param cutoff_proportion: Proportion of d. Must be in interval (0, 1).
-        :param cutoff_absolute: Absolute value of d.
+        :param cutoff_proportion: Proportion of `d`. Must be in interval (0, 1).
+        :param cutoff_absolute: Absolute value of `d`.
         """
         if not operator.xor(cutoff_absolute is None, cutoff_proportion is None):
             raise ValueError("Must give either cutoff_absolute or cutoff_proportion")
@@ -520,7 +525,7 @@ class Sigmoid:
     def scale(self, x: Union[Real, np.ndarray]) -> Union[Real, np.ndarray]:
         """
         Log dilutions are scaled to have mean of 0 and standard deviation of 1
-        for efficient inference. Apply the same scaling to x, i.e. from the log
+        for efficient inference. Apply the same scaling to `x`, i.e. from the log
         dilution scale to the standardised log dilution scale.
 
         :param x: Value(s) to scale.
@@ -530,7 +535,8 @@ class Sigmoid:
     def inverse_scale(self, x: Union[Real, np.ndarray]) -> Union[Real, np.ndarray]:
         """
         Log dilutions are scaled to have mean of 0 and standard deviation of 1
-        for efficient inference. Apply the inverse scaling to x, i.e. from the standardised log dilution scale back to the log dilution scale.
+        for efficient inference. Apply the inverse scaling to `x`, i.e. from the
+        standardised log dilution scale back to the log dilution scale.
 
         :param x: Value(s) to scale.
         """
@@ -539,7 +545,7 @@ class Sigmoid:
     @property
     def log_dilutions(self) -> np.array:
         """
-        A sorted array of unique log dilutions in the data.
+        Sorted array of unique log dilutions in the data.
         """
         try:
             return np.sort(self.data["log dilution"].unique())
@@ -551,7 +557,7 @@ class Sigmoid:
     @property
     def log_dilutions_std(self) -> np.array:
         """
-        A sorted array of unique standardised log dilutions in the data.
+        Sorted array of unique standardised log dilutions in the data.
         """
         try:
             return self.scale(self.log_dilutions)

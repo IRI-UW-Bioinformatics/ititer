@@ -30,17 +30,22 @@ release = "0.1.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx"]
 autodoc_typehints = "description"
 autodoc_member_order = "bysource"
 pygments_style = "sphinx"
 
 html_theme_options = {
-    "github_user": "IRI-UW-Bioinformatics",
-    "github_repo": "ititer",
-    "github_button": True,
+    "repository_url": "https://github.com/IRI-UW-Bioinformatics/ititer/",
+    "use_repository_button": True,
+    "extra_navbar": "<p>A python module for analyzing serial dilution assay data.</p>",
 }
 
+intersphinx_mapping = {
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "pymc3": ("https://docs.pymc.io/", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -56,13 +61,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
-
-html_theme_options = {"page_width": "1400px", "fixed_sidebar": True}
+html_theme = "sphinx_book_theme"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static/custom.css"]
+
+html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 
 html_logo = "logo.png"

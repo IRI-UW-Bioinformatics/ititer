@@ -1,7 +1,7 @@
-div.body {
-    max-width: 850px;
+table p {
+    margin-bottom: 0rem;
 }
 
-.method, .property, .function, .class {
-    margin-top: 25px;
+td {
+    padding: 8px;
 }
