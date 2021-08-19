@@ -22,6 +22,13 @@ class ModelNotFittedError(Exception):
     pass
 
 
+def _contains_null(array) -> bool:
+    """
+    Test if an array contains nan values.
+    """
+    return pd.isnull(array).any()
+
+
 def _batches(iterable: Iterable, n: int) -> Generator[tuple, None, None]:
     """
     Generate batches length n of an iterable.
@@ -183,12 +190,23 @@ class Sigmoid:
             log_dilution = data[log_dilution].values
             response = data[response].values
             sample_labels = data[sample_labels].values
+
         elif data is not None:
-            raise ValueError("data should be a pandas DataFrame or None")
+            raise ValueError("data should be a pandas.DataFrame or None")
+
         else:
             log_dilution = np.array(log_dilution)
             response = np.array(response)
             sample_labels = np.array(sample_labels)
+
+        if _contains_null(log_dilution):
+            raise ValueError("log_dilution contains nan values")
+
+        if _contains_null(response):
+            raise ValueError("response contains nan values")
+
+        if _contains_null(sample_labels):
+            raise ValueError("sample_labels contains nan values")
 
         if 1 != log_dilution.ndim:
             raise ValueError("log_dilution not 1 dimensional")

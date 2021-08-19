@@ -217,6 +217,66 @@ class TestSigmoid(unittest.TestCase):
             draws=10,
         )
 
+    def test_cant_pass_data_containing_nan_log_dilution(self):
+        """
+        Passing data containing nan values should raise ValueError.
+        """
+        df = pd.DataFrame(
+            dict(
+                log_dilution=[1, 2, None, 4, 1, 2, 3, 4],
+                response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
+                sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "log_dilution contains nan values"):
+            Sigmoid().fit(
+                data=df,
+                response="response",
+                sample_labels="sample_labels",
+                log_dilution="log_dilution",
+                draws=10,
+            )
+
+    def test_cant_pass_data_containing_nan_response(self):
+        """
+        Passing data containing nan values should raise ValueError.
+        """
+        df = pd.DataFrame(
+            dict(
+                log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
+                response=[1, None, 0.3, 0, 1, 0.7, 0.3, 0],
+                sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "response contains nan values"):
+            Sigmoid().fit(
+                data=df,
+                response="response",
+                sample_labels="sample_labels",
+                log_dilution="log_dilution",
+                draws=10,
+            )
+
+    def test_cant_pass_data_containing_nan_sample_labels(self):
+        """
+        Passing data containing nan values should raise ValueError.
+        """
+        df = pd.DataFrame(
+            dict(
+                log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
+                response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
+                sample_labels=["a", None, "a", "a", "b", "b", "b", "b"],
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "sample_labels contains nan values"):
+            Sigmoid().fit(
+                data=df,
+                response="response",
+                sample_labels="sample_labels",
+                log_dilution="log_dilution",
+                draws=10,
+            )
+
 
 class TestSigmoidSampling(unittest.TestCase):
     """
