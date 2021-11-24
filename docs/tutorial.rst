@@ -124,7 +124,7 @@ You can take the mean value of each parameter from the posterior distribution an
 
 .. code-block:: python
 
-    sigmoid.plot_sample("21-P0004-v001sr01", step=1000, mean=True)
+    sigmoid.plot_sample("21-P0004-v001sr01", mean=True)
 
 .. image:: 1-sample-mean.png
 
