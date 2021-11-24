@@ -17,7 +17,7 @@ This is usually overkill as the underlying sigmoid curve can be recovered by man
 
 **ititer** uses Bayesian hierarchical modelling to pool inference of sigmoid curve characteristics that are shared among samples, which further reduces the number dilutions required to infer inflection or endpoint titers.
 
-Applied to a SARS-CoV-2 and human seasonal coronavirus ELISA dataset, just 3 dilutions yielded the same inflection and endpoint titers as 8 dilutions. <Cite XXX>.
+Applied to a SARS-CoV-2 and human seasonal coronavirus ELISA dataset, just 3 dilutions yielded the same inflection and endpoint titers as 8 dilutions (`Pattinson et al. 2021 <https://www.medrxiv.org/content/10.1101/2021.09.13.21263523v1>`_).
 
 Highlights
 ----------
