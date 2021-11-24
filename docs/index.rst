@@ -36,6 +36,7 @@ Contents
    tutorial
    inference
    commands
+   citation
 
 * :ref:`genindex`
 
@@ -47,14 +48,3 @@ ititer is available from pip:
 .. code-block:: bash
 
     $ pip install ititer
-
-Citation
---------
-
-If you use this software please cite:
-
-  `A method to reduce ELISA serial dilution assay workload applied to SARS-CoV-2 and seasonal HCoVs <https://www.medrxiv.org/content/10.1101/2021.09.13.21263523v1>`_
-
-  David Pattinson, Peter Jester, Lizheng Guan, Seiya Yamayoshi, Shiho Chiba, Robert Presler Jr., Hongyu Rao, Kiyoko Iwatsuki-Horimoto, Nobuhiro Ikeda, Masao Hagihara, Tomoyuki Uchida, Keiko Mitamura, Peter Halfmann, Gabriele Neumann, Yoshihiro Kawaoka
-
-  *medRxiv* 2021.09.13.21263523; doi: https://doi.org/10.1101/2021.09.13.21263523
