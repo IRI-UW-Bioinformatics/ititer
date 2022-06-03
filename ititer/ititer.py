@@ -119,7 +119,7 @@ def index_to_titer(
     """
     _check_start_fold_valid(start, fold)
     index = np.array(index) if isinstance(index, (list, tuple)) else index
-    return start * fold ** index
+    return start * fold**index
 
 
 class Sigmoid:
@@ -241,7 +241,8 @@ class Sigmoid:
             if self.a == "partial":
                 mu_a = pm.Normal("mu_a", 0, 1)
                 sigma_a = pm.Exponential("sigma_a", 1)
-                a = pm.Normal("a", mu_a, sigma_a, shape=n_samples)[sample_idx]
+                a_unit = pm.Normal("a_unit", 0, 1, shape=n_samples)
+                a = pm.Deterministic("a", a_unit * sigma_a + mu_a)[sample_idx]
             elif self.a == "full":
                 a = pm.Normal("a", 0, 1)
             else:
@@ -250,7 +251,8 @@ class Sigmoid:
             if self.b == "partial":
                 mu_b = pm.Normal("mu_b", 0, 1)
                 sigma_b = pm.Exponential("sigma_b", 1)
-                b = pm.Normal("b", mu_b, sigma_b, shape=n_samples)[sample_idx]
+                b_unit = pm.Normal("b_unit", 0, 1, shape=n_samples)
+                b = pm.Deterministic("b", b_unit * sigma_b + mu_b)[sample_idx]
             elif self.b == "full":
                 b = pm.Normal("b", 0, 1)
             else:
@@ -259,7 +261,8 @@ class Sigmoid:
             if self.c == "partial":
                 mu_c = pm.Normal("mu_c", 0, 1)
                 sigma_c = pm.Exponential("sigma_c", 1)
-                c = pm.Normal("c", mu_c, sigma_c, shape=n_samples)[sample_idx]
+                c_unit = pm.Normal("b_unit", 0, 1, shape=n_samples)
+                b = pm.Deterministic("c", c_unit * sigma_c + mu_c)[sample_idx]
             elif self.c == "full":
                 c = pm.Normal("c", 0, 1)
             else:
@@ -278,9 +281,7 @@ class Sigmoid:
             pm.Normal("lik", mu, sigma, observed=response)
             if prior_predictive:
                 sigmoid.prior_predictive = pm.sample_prior_predictive()
-            sigmoid.posterior = pm.sample(
-                draws=draws, return_inferencedata=False, **kwds
-            )
+            sigmoid.posterior = pm.sample(draws=draws, return_inferencedata=False, **kwds)
 
         sigmoid.mu_log_dilution = mu_log_dilution
         sigmoid.sd_log_dilution = sd_log_dilution
@@ -332,17 +333,13 @@ class Sigmoid:
             None, the highest log dilution in the data is used.
         """
         def_scatter_kwds = dict(c="black", zorder=10)
-        def_line_kwds = dict(
-            lw=1 if mean else 0.5, zorder=5, c=None if mean else "grey"
-        )
+        def_line_kwds = dict(lw=1 if mean else 0.5, zorder=5, c=None if mean else "grey")
         scatter_kwds = (
             def_scatter_kwds
             if scatter_kwds is None
             else {**def_scatter_kwds, **scatter_kwds}
         )
-        line_kwds = (
-            def_line_kwds if line_kwds is None else {**def_line_kwds, **line_kwds}
-        )
+        line_kwds = def_line_kwds if line_kwds is None else {**def_line_kwds, **line_kwds}
         i = self.sample_i[sample]
         xmin = self.data["log dilution std"].min() if xmin is None else self.scale(xmin)
         xmax = self.data["log dilution std"].max() if xmax is None else self.scale(xmax)
