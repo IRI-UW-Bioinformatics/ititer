@@ -62,7 +62,7 @@ class TestFittedSigmoid(unittest.TestCase):
         """
         Providing a negative cutoff_proportion should raise a ValueError.
         """
-        msg = "cutoff_proportion must be in interval \(0, 1\)"
+        msg = r"cutoff_proportion must be in interval \(0, 1\)"
         with self.assertRaisesRegex(ValueError, msg):
             self.sigmoid.endpoints(cutoff_proportion=-0.5)
 
@@ -70,7 +70,7 @@ class TestFittedSigmoid(unittest.TestCase):
         """
         Providing cutoff_proportion greater than 1 should raise a ValueError.
         """
-        msg = "cutoff_proportion must be in interval \(0, 1\)"
+        msg = r"cutoff_proportion must be in interval \(0, 1\)"
         with self.assertRaisesRegex(ValueError, msg):
             self.sigmoid.endpoints(cutoff_proportion=1.5)
 
@@ -193,7 +193,7 @@ class TestSigmoid(unittest.TestCase):
         """
         with self.assertRaisesRegex(
             ValueError,
-            "log_dilution \(8\), response \(7\) and sample_labels \(8\) not "
+            r"log_dilution \(8\), response \(7\) and sample_labels \(8\) not "
             "the same length",
         ):
             Sigmoid().fit(

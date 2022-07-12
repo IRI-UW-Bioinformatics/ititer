@@ -4,8 +4,8 @@ test:
 	pytest --disable-warnings
 
 check:
-	pyflakes **.py
-	pycodestyle **.py
+	pyflakes **/*.py
+	pycodestyle --ignore=E501 **/*.py
 
 upload:
 	python setup.py sdist

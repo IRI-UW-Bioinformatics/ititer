@@ -36,7 +36,7 @@ def _batches(iterable: Iterable, n: int) -> Generator[tuple, None, None]:
     iterable = tuple(iterable)
     i = 0
     while i < len(iterable):
-        yield iterable[i : i + n]
+        yield iterable[i: i + n]
         i += n
 
 

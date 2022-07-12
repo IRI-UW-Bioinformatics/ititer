@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-%load_ext autoreload
-%autoreload 2
-
 # %%
 
 import matplotlib.pyplot as plt
@@ -71,15 +68,29 @@ sigmoid.plot_sample(
     # scatter_kwds=dict(clip_on=False, s=25, lw=0.5, ec="white"),
     scatter_kwds=dict(marker="x", zorder=0, c="grey", clip_on=False),
     xmin=xmin,
-    xmax=xmax
+    xmax=xmax,
 )
-for y in 0, ymax, ymax/2:
+for y in 0, ymax, ymax / 2:
     plt.hlines(y, xmin, xmax, colors="lightgrey", clip_on=False)
 plt.annotate("Max. response", (xmax, ymax), va="bottom", ha="right", fontsize=fontsize)
-plt.annotate("Half max. response", (xmax, ymax/2), va="bottom", ha="right", fontsize=fontsize)
-plt.annotate("", xy=(inflection_titer, 0), xytext=(inflection_titer, ymax/2), arrowprops=dict(arrowstyle="->"))
-plt.annotate("Inflection titer", (inflection_titer-0.1, ymax*0.25), fontsize=fontsize, clip_on=False, va="center", ha="right")
-plt.ylim(0, ymax+0.2)
+plt.annotate(
+    "Half max. response", (xmax, ymax / 2), va="bottom", ha="right", fontsize=fontsize
+)
+plt.annotate(
+    "",
+    xy=(inflection_titer, 0),
+    xytext=(inflection_titer, ymax / 2),
+    arrowprops=dict(arrowstyle="->"),
+)
+plt.annotate(
+    "Inflection titer",
+    (inflection_titer - 0.1, ymax * 0.25),
+    fontsize=fontsize,
+    clip_on=False,
+    va="center",
+    ha="right",
+)
+plt.ylim(0, ymax + 0.2)
 plt.xlim(xmin, xmax)
 plt.xticks(sigmoid.log_dilutions, labels, rotation=90)
 plt.xlabel("Dilution")
