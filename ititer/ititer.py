@@ -7,7 +7,7 @@ import pandas as pd
 
 import numpy as np
 import arviz as az
-import pymc3 as pm
+import pymc as pm
 import matplotlib.pyplot as plt
 
 plt.style.use("seaborn-whitegrid")
@@ -262,7 +262,7 @@ class Sigmoid:
                 mu_c = pm.Normal("mu_c", 0, 1)
                 sigma_c = pm.Exponential("sigma_c", 1)
                 c_unit = pm.Normal("b_unit", 0, 1, shape=n_samples)
-                b = pm.Deterministic("c", c_unit * sigma_c + mu_c)[sample_idx]
+                c = pm.Deterministic("c", c_unit * sigma_c + mu_c)[sample_idx]
             elif self.c == "full":
                 c = pm.Normal("c", 0, 1)
             else:
