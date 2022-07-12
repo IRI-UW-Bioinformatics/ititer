@@ -1,9 +1,11 @@
 import unittest
-import pymc3 as pm
+import pymc as pm
 import pandas as pd
 
 import ititer as it
 from ititer import Sigmoid
+
+FIT_KWDS = dict(tune=1, draws=1)
 
 
 class TestFittedSigmoid(unittest.TestCase):
@@ -20,10 +22,10 @@ class TestFittedSigmoid(unittest.TestCase):
         df = it.load_example_data().head(50)
         df["Log Dilution"] = it.titer_to_index(df["Dilution"], start=40, fold=4)
         cls.sigmoid = sigmoid.fit(
-            draws=10,  # Just for testing
             log_dilution=df["Log Dilution"],
             response=df["OD"],
             sample_labels=df["Sample"],
+            **FIT_KWDS
         )
 
     def test_inflections_dataframe_columns(self):
@@ -154,6 +156,7 @@ class TestSigmoid(unittest.TestCase):
                 ],
                 response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
                 sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
+                **FIT_KWDS
             )
 
     def test_passing_multidimensional_response(self):
@@ -168,6 +171,7 @@ class TestSigmoid(unittest.TestCase):
                     [1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
                 ],
                 sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
+                **FIT_KWDS
             )
 
     def test_passing_multidimensional_sample_labels(self):
@@ -180,6 +184,7 @@ class TestSigmoid(unittest.TestCase):
                 log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
                 response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
                 sample_labels=(("a", "a", "a", "a", "b", "b", "b", "b"),),
+                **FIT_KWDS
             )
 
     def test_passing_length_mismatch(self):
@@ -195,6 +200,7 @@ class TestSigmoid(unittest.TestCase):
                 log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
                 response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3],
                 sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
+                **FIT_KWDS
             )
 
     def test_passing_column_names(self):
@@ -214,7 +220,7 @@ class TestSigmoid(unittest.TestCase):
             response="response",
             sample_labels="sample_labels",
             log_dilution="log_dilution",
-            draws=10,
+            **FIT_KWDS
         )
 
     def test_cant_pass_data_containing_nan_log_dilution(self):
@@ -234,7 +240,7 @@ class TestSigmoid(unittest.TestCase):
                 response="response",
                 sample_labels="sample_labels",
                 log_dilution="log_dilution",
-                draws=10,
+                **FIT_KWDS
             )
 
     def test_cant_pass_data_containing_nan_response(self):
@@ -254,7 +260,7 @@ class TestSigmoid(unittest.TestCase):
                 response="response",
                 sample_labels="sample_labels",
                 log_dilution="log_dilution",
-                draws=10,
+                **FIT_KWDS
             )
 
     def test_cant_pass_data_containing_nan_sample_labels(self):
@@ -274,7 +280,7 @@ class TestSigmoid(unittest.TestCase):
                 response="response",
                 sample_labels="sample_labels",
                 log_dilution="log_dilution",
-                draws=10,
+                **FIT_KWDS
             )
 
 
@@ -298,7 +304,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertIsInstance(
             b, Sigmoid, "Sigmoid.fit does not return an instance of Sigmoid"
@@ -321,7 +327,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertTrue(
             hasattr(b, "posterior"),
@@ -337,7 +343,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertIn("mu_a", sigmoid.posterior.varnames)
         self.assertIn("sigma_a", sigmoid.posterior.varnames)
@@ -351,7 +357,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_a", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_a", sigmoid.posterior.varnames)
@@ -365,7 +371,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_a", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_a", sigmoid.posterior.varnames)
@@ -379,7 +385,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertIn("mu_b", sigmoid.posterior.varnames)
         self.assertIn("sigma_b", sigmoid.posterior.varnames)
@@ -393,7 +399,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_b", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_b", sigmoid.posterior.varnames)
@@ -407,7 +413,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_b", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_b", sigmoid.posterior.varnames)
@@ -421,7 +427,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertIn("mu_c", sigmoid.posterior.varnames)
         self.assertIn("sigma_c", sigmoid.posterior.varnames)
@@ -435,7 +441,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_c", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_c", sigmoid.posterior.varnames)
@@ -449,7 +455,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_c", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_c", sigmoid.posterior.varnames)
@@ -464,7 +470,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_d", sigmoid.posterior.varnames)
         self.assertIn("sigma_d", sigmoid.posterior.varnames)
@@ -478,7 +484,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_d", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_d", sigmoid.posterior.varnames)
@@ -492,7 +498,7 @@ class TestSigmoidSampling(unittest.TestCase):
             log_dilution=[1, 2, 3, 4, 1, 2, 3, 4],
             response=[1, 0.7, 0.3, 0, 1, 0.7, 0.3, 0],
             sample_labels=["a", "a", "a", "a", "b", "b", "b", "b"],
-            draws=2,
+            **FIT_KWDS
         )
         self.assertNotIn("mu_d", sigmoid.posterior.varnames)
         self.assertNotIn("sigma_d", sigmoid.posterior.varnames)
