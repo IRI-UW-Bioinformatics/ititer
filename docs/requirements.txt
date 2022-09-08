@@ -2,3 +2,4 @@ Sphinx==3.5.4
 sphinx-book-theme==0.1.2
 ititer==0.1.2
 sphinx-copybutton>=0.4.0
+Jinja2<3.1
