@@ -37,6 +37,7 @@ Contents
    inference
    commands
    citation
+   changelog
 
 * :ref:`genindex`
 
