@@ -1,3 +1,4 @@
+from __future__ import annotations
 import math
 import operator
 from os import path
@@ -36,7 +37,7 @@ def _batches(iterable: Iterable, n: int) -> Generator[tuple, None, None]:
     iterable = tuple(iterable)
     i = 0
     while i < len(iterable):
-        yield iterable[i: i + n]
+        yield iterable[i : i + n]
         i += n
 
 
@@ -120,6 +121,27 @@ def index_to_titer(
     _check_start_fold_valid(start, fold)
     index = np.array(index) if isinstance(index, (list, tuple)) else index
     return start * fold**index
+
+
+class UnitScaler:
+    """Scale data to a range of 0-1."""
+
+    Array = Union[pd.Series, np.ndarray]
+
+    def fit(self, data: Array) -> UnitScaler:
+        self.data_min = data.min()
+        self.data_range = data.max() - data.min()
+        return self
+
+    def transform(self, array: Array) -> Array:
+        return (array - self.data_min) / self.data_range
+
+    def inverse_transform(self, array: Array) -> Array:
+        return array * self.data_range + self.data_min
+
+    def fit_transform(self, array: Array) -> Array:
+        self.fit(array)
+        return self.transform(array)
 
 
 class Sigmoid:
@@ -232,9 +254,14 @@ class Sigmoid:
         sample_idx = np.array([uniq_samples.index(sample) for sample in sample_labels])
         sample_i = {sample: uniq_samples.index(sample) for sample in sample_labels}
 
+        # Scale x values to have mean of 0 and std deviation of 1
         mu_log_dilution = np.mean(log_dilution)
         sd_log_dilution = np.std(log_dilution)
         x = (log_dilution - mu_log_dilution) / sd_log_dilution
+
+        # Scale reponse (y) values to have min of 0 and max of 1
+        y_scaler = UnitScaler().fit(response)
+        y = y_scaler.transform(response)
 
         with pm.Model() as self.model:
 
@@ -278,11 +305,16 @@ class Sigmoid:
 
             sigma = pm.Exponential("sigma", 1)
             mu = c + d * pm.math.invlogit(-b * (x - a))
-            pm.Normal("lik", mu, sigma, observed=response)
+            pm.Normal("lik", mu, sigma, observed=y)
+
             if prior_predictive:
                 sigmoid.prior_predictive = pm.sample_prior_predictive()
-            sigmoid.posterior = pm.sample(draws=draws, return_inferencedata=False, **kwds)
 
+            sigmoid.posterior = pm.sample(
+                draws=draws, return_inferencedata=False, **kwds
+            )
+
+        sigmoid.y_scaler = y_scaler
         sigmoid.mu_log_dilution = mu_log_dilution
         sigmoid.sd_log_dilution = sd_log_dilution
         sigmoid.sample_i = sample_i
@@ -333,13 +365,17 @@ class Sigmoid:
             None, the highest log dilution in the data is used.
         """
         def_scatter_kwds = dict(c="black", zorder=10)
-        def_line_kwds = dict(lw=1 if mean else 0.5, zorder=5, c=None if mean else "grey")
+        def_line_kwds = dict(
+            lw=1 if mean else 0.5, zorder=5, c=None if mean else "grey"
+        )
         scatter_kwds = (
             def_scatter_kwds
             if scatter_kwds is None
             else {**def_scatter_kwds, **scatter_kwds}
         )
-        line_kwds = def_line_kwds if line_kwds is None else {**def_line_kwds, **line_kwds}
+        line_kwds = (
+            def_line_kwds if line_kwds is None else {**def_line_kwds, **line_kwds}
+        )
         i = self.sample_i[sample]
         xmin = self.data["log dilution std"].min() if xmin is None else self.scale(xmin)
         xmax = self.data["log dilution std"].max() if xmax is None else self.scale(xmax)
@@ -356,6 +392,7 @@ class Sigmoid:
                 params[param] = value
         ygrid = inverse_logit(xgrid, **params)
         ygrid = ygrid.mean(axis=1) if mean else ygrid
+        ygrid = self.y_scaler.inverse_transform(ygrid)
         lines = plt.plot(self.inverse_scale(xgrid), ygrid, **line_kwds)
 
         if points:
