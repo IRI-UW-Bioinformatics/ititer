@@ -5,7 +5,7 @@ test:
 
 check:
 	pyflakes **/*.py
-	pycodestyle --ignore=E501 **/*.py
+	pycodestyle --ignore=E501,E203 **/*.py
 
 upload:
 	python setup.py sdist
