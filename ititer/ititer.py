@@ -155,6 +155,10 @@ class Sigmoid:
     partially pooling inference across samples (`partial` vs `full`).
     Parameters can also be fixed *a priori*, by providing a float.
 
+    Response values are standardised to have a range of 0-1 prior to inference.
+    Log dilution values are standardised to have a mean of 0 and standard
+    deviation of 1 prior to inference.
+
     :param a: ``'partial'``, ``'full'`` or float.
     :param b: ``'partial'``, ``'full'`` or float.
     :param c: ``'partial'``, ``'full'`` or float.
