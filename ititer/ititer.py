@@ -542,7 +542,7 @@ class Sigmoid:
             if not isinstance(cutoff_absolute, Real):
                 raise ValueError("cutoff_absolute must be a number")
             else:
-                y = cutoff_absolute
+                y = self.y_scaler.transform(cutoff_absolute)
 
         # Get posterior distributions of parameter values in correct shape
         params = {}
