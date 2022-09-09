@@ -27,8 +27,7 @@ Standardizing
 
 Log dilution is standardized to have mean of zero and standard deviation of one for inference.
 
-Response is left unstandardized in order to set informative priors for `c` and `d`.
-For instance, it is often known *a priori* that at theoretical minimum or maximum concentrations the response will have some known value.
+Response is standardized to have a minimum of 0 and maximum of 1.
 
 Priors
 ------
