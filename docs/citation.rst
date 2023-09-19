@@ -3,7 +3,7 @@ Citation
 
 If you use this software please cite:
 
-  `A method to reduce ELISA serial dilution assay workload applied to SARS-CoV-2 and seasonal HCoVs <https://www.mdpi.com/1999-4915/14/3/562>`_
+  `A novel method to reduce ELISA serial dilution assay workload applied to SARS-CoV-2 and seasonal HCoVs <https://www.mdpi.com/1999-4915/14/3/562>`_
 
   David Pattinson, Peter Jester, Lizheng Guan, Seiya Yamayoshi, Shiho Chiba, Robert Presler Jr., Hongyu Rao, Kiyoko Iwatsuki-Horimoto, Nobuhiro Ikeda, Masao Hagihara, Tomoyuki Uchida, Keiko Mitamura, Peter Halfmann, Gabriele Neumann, Yoshihiro Kawaoka
 
