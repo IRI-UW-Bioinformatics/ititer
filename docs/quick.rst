@@ -44,6 +44,7 @@ Fit and visualize sigmoid curves:
         response="OD",
         sample_labels="Sample",
         log_dilution="Log Dilution",
+        data=df,
     )
 
     sigmoid.plot_samples(["21-P0833-v001sr01", "21-P0834-v001sr01"])
